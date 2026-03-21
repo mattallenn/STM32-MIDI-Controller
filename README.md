@@ -26,8 +26,8 @@ Also, I added a copper ring around the outside of the board. This really makes n
 
 I added some unnecessary feautures on this board such as programmable SMD LEDs and headers for unnused GPIO. This won't be accessible when inside of the enclosure, but I'm ordering 5 PCBs, so I can hopefully use the excess boards for different projects. 
 
-![PCB Front Render](images/STOMPR_front.png)
-![PCB Back Render](images/STOMPR_back.png)
+![PCB Front Render](Images/STOMPR_front.png)
+![PCB Back Render](Images/STOMPR_back.png)
 
 ### Switches & Knobs
 
