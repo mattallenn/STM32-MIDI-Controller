@@ -1,0 +1,53 @@
+Designator,Val,Package,Mid X,Mid Y,Rotation,Layer
+C1,100n,C_0603_1608Metric,130.2,-68.375,90.0,top
+C12,22u,C_0805_2012Metric,152.65,-67.55,0.0,top
+C13,22u,C_0805_2012Metric,152.65,-70.05,0.0,top
+C14,10u,C_0603_1608Metric,134.65,-63.45,0.0,top
+C15,100n,C_0603_1608Metric,134.675,-65.2,0.0,top
+C16,100n,C_0603_1608Metric,135.175,-80.85,180.0,top
+C17,100n,C_0603_1608Metric,141.675,-80.9,180.0,top
+C18,100n,C_0603_1608Metric,145.9,-68.725,-90.0,top
+C19,10n,C_0603_1608Metric,130.25,-74.775,90.0,top
+C2,0.1uf,C_0603_1608Metric,132.445,-71.99,0.0,bottom
+C20,1u,C_0603_1608Metric,128.9,-79.775,90.0,top
+C21,1u,C_0603_1608Metric,130.75,-83.15,90.0,top
+C22,100n,C_0603_1608Metric,127.425,-65.0,180.0,top
+C23,10p,C_0603_1608Metric,127.85,-71.55,90.0,top
+C24,10p,C_0603_1608Metric,127.85,-74.8,-90.0,top
+C3,0.1uf,C_0603_1608Metric,132.45,-75.41,0.0,bottom
+C4,0.1uf,C_0603_1608Metric,134.225,-67.17,0.0,bottom
+C5,0.1uf,C_0603_1608Metric,132.45,-73.71,0.0,bottom
+C6,0.1uf,C_0603_1608Metric,132.45,-77.07,0.0,bottom
+C7,4.7uF,C_0603_1608Metric,141.68,-82.65,0.0,top
+D1,RED,LED_0603_1608Metric,121.7225,-57.52,0.0,top
+D2,LED,LED_0603_1608Metric,171.42,-56.2575,0.0,top
+D3,LED,LED_0603_1608Metric,171.395,-58.4575,0.0,top
+D4,LED,LED_0603_1608Metric,171.47,-60.6575,0.0,top
+FB2,120R,L_0603_1608Metric,128.9,-83.1375,-90.0,top
+J1,Potentiometer 1 Conn,JST_EH_B3B-EH-A_1x03_P2.50mm_Vertical,169.4,-65.2,0.0,top
+J10,Switch 2,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,135.275,-91.475,0.0,top
+J11,Switch 3,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,145.075,-91.475,0.0,top
+J12,Switch 4,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,154.75,-91.5,0.0,top
+J13,Conn_01x04_Pin,PinHeader_1x04_P2.54mm_Vertical,177.8,-69.01,180.0,top
+J14,Conn_01x04_Pin,PinHeader_1x04_P2.54mm_Vertical,177.8,-80.2,180.0,top
+J15,Switch 4,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,158.63,-58.41,0.0,top
+J2,Potentiometer 3 Conn,JST_EH_B3B-EH-A_1x03_P2.50mm_Vertical,169.4,-77.2,0.0,top
+J3,Potentiometer 2 Conn,JST_EH_B3B-EH-A_1x03_P2.50mm_Vertical,169.4,-71.3,0.0,top
+J4,Potentiometer 4 Conn,JST_EH_B3B-EH-A_1x03_P2.50mm_Vertical,169.4,-82.925,0.0,top
+J5,USART,PinHeader_1x04_P2.54mm_Vertical,116.75,-71.26,180.0,top
+J6,SWD Header,PinHeader_1x04_P2.54mm_Vertical,116.775,-82.43,180.0,top
+J7,USB_B_Micro,USB_Micro-B_Wuerth_629105150521,147.475,-55.07,180.0,top
+J8,Expression Pedal Pot Conn,JST_EH_B3B-EH-A_1x03_P2.50mm_Vertical,131.35,-58.5,0.0,top
+J9,Switch 1,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,125.375,-91.5,0.0,top
+R1,10k,R_0805_2012Metric,125.3125,-87.875,180.0,top
+R2,10k,R_0805_2012Metric,135.1375,-87.825,180.0,top
+R3,1k5,R_0603_1608Metric,118.435,-57.51,180.0,top
+R4,10k,R_0805_2012Metric,154.3125,-87.7,180.0,top
+R5,10k,R_0805_2012Metric,145.1375,-87.875,180.0,top
+R6,10k,R_0603_1608Metric,138.125,-63.45,0.0,top
+R7,330,R_0805_2012Metric,167.82,-56.1825,180.0,top
+R8,330,R_0805_2012Metric,167.82,-58.4075,180.0,top
+R9,330,R_0805_2012Metric,167.77,-60.7075,180.0,top
+U1,STM32F411RETx,LQFP-64_10x10mm_P0.5mm,138.15,-72.875,0.0,top
+U2,AMS1117-3.3,SOT-223-3_TabPin2,151.55,-75.75,-90.0,top
+Y2,16MHz,Crystal_SMD_3225-4Pin_3.2x2.5mm,124.65,-73.3,-90.0,top
