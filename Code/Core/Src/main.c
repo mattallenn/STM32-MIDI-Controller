@@ -18,24 +18,50 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
-#include "usbd_cdc_if.h"
-
+#include "tusb.h"
+#include <stdint.h>
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef enum {
+	MIDI_NOTE_OFF	= 0x00,
+	MIDI_NOTE_ON	= 0x90,
+	MIDI_CC			= 0xB0,
+	MIDI_PC			= 0xC0,
+	MIDI_PITCH_BEND	= 0xE0
+} MidiCommand_t;
 
+typedef struct {
+	MidiCommand_t cmd;
+	uint8_t data1;
+	uint8_t data2;
+} MidiPacket_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define NUM_ADC_CHANNELS 	4
 
-#define USB_BUFLEN 128
+#define MIDI_CHANNEL 		0x00
+
+#define SW1_CC_NUM	 		0x01
+#define SW2_CC_NUM			0x02
+
+#define SW3_PC_NUM			0x00
+#define SW4_PC_NUM 			0x01
+
+#define ADC0_CC_NUM      	0x10
+#define ADC1_CC_NUM      	0x11
+#define ADC2_CC_NUM      	0x12
+#define ADC3_CC_NUM      	0x13
+
+#define ADC_CC_THRESHOLD 	3
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,24 +72,46 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
-UART_HandleTypeDef huart2;
+PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
-uint8_t usbTxBuf[USB_BUFLEN];
-uint16_t usbTxBufLen;
+uint16_t adc_buf[NUM_ADC_CHANNELS];
+uint8_t last_adc_cc[NUM_ADC_CHANNELS] = {0xFF, 0xFF, 0xFF, 0xFF};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_USB_OTG_FS_PCD_Init(void);
 /* USER CODE BEGIN PFP */
-
+static void MIDI_SendCC(uint8_t controller, uint8_t value);
+static void MIDI_SendPC(uint8_t program);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void MIDI_SendCC(uint8_t controller, uint8_t value)
+{
+    uint8_t packet[4] = {
+        0x0B,                    // 0x0B (Control Change), Cable 0
+        MIDI_CC | MIDI_CHANNEL,  // CC on channel 1
+        controller,              // Controller number
+        value                    // Controller value
+    };
+    tud_midi_packet_write(packet);
+}
+
+static void MIDI_SendPC(uint8_t program)
+{
+    uint8_t packet[4] = {
+        0x0C,                    // 0x0C (Program Change), Cable 0
+        MIDI_PC | MIDI_CHANNEL,  // 0xC0 = PC on channel 1
+        program,                 // Program number
+        0x00                     // Unused
+    };
+    tud_midi_packet_write(packet);
+}
 
 /* USER CODE END 0 */
 
@@ -75,7 +123,6 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
 
   /* USER CODE END 1 */
 
@@ -97,33 +144,25 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART2_UART_Init();
-  MX_USB_DEVICE_Init();
   MX_ADC1_Init();
+  MX_USB_OTG_FS_PCD_Init();
+
   /* USER CODE BEGIN 2 */
 
+  tusb_rhport_init_t dev_init = {
+	  .role = TUSB_ROLE_DEVICE,
+	  .speed = TUSB_SPEED_FULL
+  };
+  tusb_init(0, &dev_init);
 
-  const char* midi_command_on = "on\r\n";
-  const char* midi_command_off = "off\r\n";
-  const char* midi_command_clean = "clean\r\n";
-  const char* midi_command_dirty = "dirty\r\n";
 
-  volatile uint16_t ADC_RESULT = 0;
-  uint8_t midi_pitch;
-  uint8_t last_midi_pitch = 0;
-  typedef enum {
-	  MIDI_NOTE_OFF		= 0x80,
-	  MIDI_NOTE_ON		= 0x90,
-	  MIDI_CC 			= 0xB0,
-	  MIDI_PITCH_BEND	= 0XE0
-  } MidiCommand_t;
+  bool sw1_cc_state = false;
+  bool sw2_cc_state = false;
 
-  typedef struct {
-	  MidiCommand_t cmd;
-	  uint8_t data1;
-	  uint8_t data2;
-  } MidiPacket_t;
-
+  bool last_sw1 = false;
+  bool last_sw2 = false;
+  bool last_sw3 = false;
+  bool last_sw4 = false;
 
   /* USER CODE END 2 */
 
@@ -131,82 +170,145 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-	  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-	  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_9);
-
-
-	  // ADC Conversion
-	  HAL_ADC_Start(&hadc1);
-	  HAL_ADC_PollForConversion(&hadc1,1); // 1ms timeout
-	  ADC_RESULT = HAL_ADC_GetValue(&hadc1);
-	  midi_pitch = (uint32_t)ADC_RESULT * 127 / 4095;
-
-
-	  if (midi_pitch != last_midi_pitch) {
-		  uint16_t len = snprintf((char*)usbTxBuf, sizeof(usbTxBuf), "pitch:%d\r\n", midi_pitch);
-		  if (len < USB_BUFLEN) {
-		      CDC_Transmit_FS(usbTxBuf, len);
-		  }
-		  last_midi_pitch = midi_pitch;
-
-	  }
-
-	  // Onboard button pressed, turn on a channel
-	  if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == GPIO_PIN_RESET) {
-
-		  HAL_Delay(50);
-
-		  uint16_t len = strlen(midi_command_on);
-			  if (len < USB_BUFLEN) {
-				  memcpy(usbTxBuf, midi_command_on, len);
-				  CDC_Transmit_FS(usbTxBuf, len);
-			  }
-
-		  while (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == GPIO_PIN_RESET);
-
-	  }
-
-	  // Onboard button pressed, turn on a channel
-	  if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_8) == GPIO_PIN_RESET) {
-
-		  HAL_Delay(50);
-
-		  uint16_t len = strlen(midi_command_clean);
-			  if (len < USB_BUFLEN) {
-				  memcpy(usbTxBuf, midi_command_clean, len);
-				  CDC_Transmit_FS(usbTxBuf, len);
-			  }
-
-		  while (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_8) == GPIO_PIN_RESET);
-
-	  }
-	  HAL_Delay(10);
-	  // Copies data into buffer, returns length of buffer.
-	  // usbTxBufLen = snprintf((char *) usbTxBuf, USB_BUFLEN, "%lu\r\n", HAL_GetTick());
-	  // CDC_Transmit_FS(usbTxBuf, usbTxBufLen);
-
-/*
-	  uint16_t len = strlen(midi_command_on);
-	  if (len < USB_BUFLEN) {
-		  memcpy(usbTxBuf, midi_command_on, len);
-		  CDC_Transmit_FS(usbTxBuf, len);
-
-	  }
-
-	  HAL_Delay(10);
-	  uint16_t len_2 = strlen(midi_command_off);
-	  if (len_2 < USB_BUFLEN) {
-		  memcpy(usbTxBuf, midi_command_off, len_2);
-		  CDC_Transmit_FS(usbTxBuf, len_2);
-
-	  }
-	  HAL_Delay(10);
-*/
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	  tud_task();
+
+	  // READ ADC
+	  for (int i = 0; i < NUM_ADC_CHANNELS; i++) {
+		  HAL_ADC_Start(&hadc1);
+		  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+		  adc_buf[i] = HAL_ADC_GetValue(&hadc1);
+	  }
+
+	  // Read Switches
+      bool sw1 = (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7) == GPIO_PIN_RESET);
+      bool sw2 = (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_RESET);
+      bool sw3 = (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_5) == GPIO_PIN_RESET);
+      bool sw4 = (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0) == GPIO_PIN_RESET);
+
+
+      // Switch 1: CC Toggle when pressed
+      if (sw1 && !last_sw1) {
+    	  HAL_Delay(50);
+    	  sw1_cc_state = !sw1_cc_state;
+          MIDI_SendCC(SW1_CC_NUM, sw1_cc_state ? 127 : 0);
+    	  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_2);
+      }
+
+      last_sw1 = sw1;
+
+
+      // SWITCH 2: CC toggle on press
+      if (sw2 && !last_sw2) {
+          HAL_Delay(50); // debounce
+          sw2_cc_state = !sw2_cc_state;
+          MIDI_SendCC(SW2_CC_NUM, sw2_cc_state ? 127 : 0);
+          HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_2);
+      }
+      last_sw2 = sw2;
+
+      //SWITCH 3: PC patch 0 on press
+      if (sw3 && !last_sw3) {
+          HAL_Delay(50); // debounce
+          MIDI_SendPC(SW3_PC_NUM);
+          HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_2);
+      }
+      last_sw3 = sw3;
+
+      // SWITCH 4: PC patch 1 on press
+      if (sw4 && !last_sw4) {
+          HAL_Delay(50); // debounce
+          MIDI_SendPC(SW4_PC_NUM);
+          HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_2);
+      }
+      last_sw4 = sw4;
+
+      // Maps adc channel to cc num
+      static const uint8_t adc_cc_nums[NUM_ADC_CHANNELS] = {
+                  ADC0_CC_NUM, ADC1_CC_NUM, ADC2_CC_NUM, ADC3_CC_NUM
+              };
+
+
+      for (int i = 0; i < NUM_ADC_CHANNELS; i++) {
+
+          uint8_t cc_val = (uint8_t)(((uint32_t)adc_buf[i] * 127) / 4095);
+
+          // Box filter: only send if change exceeds threshold.
+          int delta = (int)cc_val - (int)last_adc_cc[i];
+          if (delta < 0) delta = -delta;
+
+          if (delta > ADC_CC_THRESHOLD) {
+              last_adc_cc[i] = cc_val;
+              MIDI_SendCC(adc_cc_nums[i], cc_val);
+          }
+      }
+
+      HAL_Delay(10);
+      /* ---------------- OLD WORKING CODE ----------------
+
+	  // Build transmit buffer with ADC values
+	  uint8_t txbuf[64];
+	  int len = snprintf((char*)txbuf, sizeof(txbuf),
+	      "P1:%4u P2:%4u P3:%4u P4:%4u\r\n",
+	      adc_buf[0], adc_buf[1], adc_buf[2], adc_buf[3]);
+	// SWITCH 1
+	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7) == GPIO_PIN_RESET) {
+
+	  HAL_Delay(50);
+	  HAL_GPIO_TogglePin (GPIOD, GPIO_PIN_2);
+
+	    CDC_Transmit_FS(txbuf, len);
+
+	  while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7) == GPIO_PIN_RESET);
+
+	}
+
+	// SWITCH 2
+	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_RESET) {
+
+	  HAL_Delay(50);
+	  HAL_GPIO_TogglePin (GPIOD, GPIO_PIN_2);
+
+	    CDC_Transmit_FS(txbuf, len);
+
+	  while (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_RESET);
+
+	}
+
+	// SWITCH 3
+	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_5) == GPIO_PIN_RESET) {
+
+	  HAL_Delay(50);
+	  HAL_GPIO_TogglePin (GPIOD, GPIO_PIN_2);
+
+	    CDC_Transmit_FS(txbuf, len);
+
+	  while (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_5) == GPIO_PIN_RESET);
+
+	}
+
+	// SWITCH 4
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0) == GPIO_PIN_RESET) {
+
+	  HAL_Delay(50);
+	  HAL_GPIO_TogglePin (GPIOD, GPIO_PIN_2);
+
+	    CDC_Transmit_FS(txbuf, len);
+
+	  while (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0) == GPIO_PIN_RESET);
+
+	}
+
+
+	HAL_Delay(100);
+	*/
+
+
   }
+
   /* USER CODE END 3 */
 }
 
@@ -227,14 +329,16 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 72;
+  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLN = 96;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 3;
+  RCC_OscInitStruct.PLL.PLLQ = 4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -249,10 +353,12 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
   {
     Error_Handler();
   }
+  HAL_RCC_MCOConfig(RCC_MCO1, RCC_MCO1SOURCE_HSI, RCC_MCODIV_1);
+  HAL_RCC_MCOConfig(RCC_MCO2, RCC_MCO2SOURCE_SYSCLK, RCC_MCODIV_1);
 }
 
 /**
@@ -276,15 +382,15 @@ static void MX_ADC1_Init(void)
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ScanConvMode = ENABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.NbrOfConversion = 4;
   hadc1.Init.DMAContinuousRequests = DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
@@ -294,9 +400,36 @@ static void MX_ADC1_Init(void)
 
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_10;
+  sConfig.Channel = ADC_CHANNEL_11;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_84CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_12;
+  sConfig.Rank = 2;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_13;
+  sConfig.Rank = 3;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_0;
+  sConfig.Rank = 4;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -308,35 +441,37 @@ static void MX_ADC1_Init(void)
 }
 
 /**
-  * @brief USART2 Initialization Function
+  * @brief USB_OTG_FS Initialization Function
   * @param None
   * @retval None
   */
-static void MX_USART2_UART_Init(void)
+static void MX_USB_OTG_FS_PCD_Init(void)
 {
 
-  /* USER CODE BEGIN USART2_Init 0 */
+  /* USER CODE BEGIN USB_OTG_FS_Init 0 */
 
-  /* USER CODE END USART2_Init 0 */
+  /* USER CODE END USB_OTG_FS_Init 0 */
 
-  /* USER CODE BEGIN USART2_Init 1 */
+  /* USER CODE BEGIN USB_OTG_FS_Init 1 */
 
-  /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
+  /* USER CODE END USB_OTG_FS_Init 1 */
+  hpcd_USB_OTG_FS.Instance = USB_OTG_FS;
+  hpcd_USB_OTG_FS.Init.dev_endpoints = 4;
+  hpcd_USB_OTG_FS.Init.speed = PCD_SPEED_FULL;
+  hpcd_USB_OTG_FS.Init.dma_enable = DISABLE;
+  hpcd_USB_OTG_FS.Init.phy_itface = PCD_PHY_EMBEDDED;
+  hpcd_USB_OTG_FS.Init.Sof_enable = DISABLE;
+  hpcd_USB_OTG_FS.Init.low_power_enable = DISABLE;
+  hpcd_USB_OTG_FS.Init.lpm_enable = DISABLE;
+  hpcd_USB_OTG_FS.Init.vbus_sensing_enable = DISABLE;
+  hpcd_USB_OTG_FS.Init.use_dedicated_ep1 = DISABLE;
+  if (HAL_PCD_Init(&hpcd_USB_OTG_FS) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN USART2_Init 2 */
+  /* USER CODE BEGIN USB_OTG_FS_Init 2 */
 
-  /* USER CODE END USART2_Init 2 */
+  /* USER CODE END USB_OTG_FS_Init 2 */
 
 }
 
@@ -353,32 +488,65 @@ static void MX_GPIO_Init(void)
   /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, LD2_Pin|GPIO_PIN_9, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11|GPIO_PIN_12, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PC13 PC2 PC8 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_2|GPIO_PIN_8;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PA7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PC4 PC5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PC3 */
-  GPIO_InitStruct.Pin = GPIO_PIN_3;
+  /*Configure GPIO pin : PB0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PC9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF0_MCO;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LD2_Pin PA9 */
-  GPIO_InitStruct.Pin = LD2_Pin|GPIO_PIN_9;
+  /*Configure GPIO pin : PA8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF0_MCO;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PC11 PC12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PD2 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

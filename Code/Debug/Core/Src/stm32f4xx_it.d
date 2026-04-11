@@ -27,11 +27,29 @@ Core/Src/stm32f4xx_it.o: ../Core/Src/stm32f4xx_it.c ../Core/Inc/main.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfunc.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h \
- ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_usb.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd_ex.h \
- ../Core/Inc/stm32f4xx_it.h
+ ../Core/Inc/stm32f4xx_it.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/tusb.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_common.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/tusb_option.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_compiler.h \
+ ../Core/Inc/tusb_config.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_mcu.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_verify.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_types.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_debug.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/osal/osal.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_common.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/osal/osal_none.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_fifo.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/osal/osal.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_fifo.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/device/usbd.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/class/midi/midi_device.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/class/audio/audio.h \
+ /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/class/midi/midi.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
@@ -61,8 +79,26 @@ Core/Src/stm32f4xx_it.o: ../Core/Src/stm32f4xx_it.c ../Core/Inc/main.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfunc.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h:
-../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_usb.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd_ex.h:
 ../Core/Inc/stm32f4xx_it.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/tusb.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_common.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/tusb_option.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_compiler.h:
+../Core/Inc/tusb_config.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_mcu.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_verify.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_types.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_debug.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/osal/osal.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_common.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/osal/osal_none.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_fifo.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/osal/osal.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/common/tusb_fifo.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/device/usbd.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/class/midi/midi_device.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/class/audio/audio.h:
+/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/Core/tinyusb/src/class/midi/midi.h:

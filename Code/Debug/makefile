@@ -9,11 +9,59 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include USB_DEVICE/Target/subdir.mk
--include USB_DEVICE/App/subdir.mk
--include Middlewares/ST/STM32_USB_Device_Library/Core/Src/subdir.mk
--include Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/subdir.mk
 -include Drivers/STM32F4xx_HAL_Driver/Src/subdir.mk
+-include Core/tinyusb/src/typec/subdir.mk
+-include Core/tinyusb/src/portable/wch/subdir.mk
+-include Core/tinyusb/src/portable/valentyusb/eptri/subdir.mk
+-include Core/tinyusb/src/portable/ti/msp430x5xx/subdir.mk
+-include Core/tinyusb/src/portable/template/subdir.mk
+-include Core/tinyusb/src/portable/synopsys/dwc2/subdir.mk
+-include Core/tinyusb/src/portable/sunxi/subdir.mk
+-include Core/tinyusb/src/portable/st/typec/subdir.mk
+-include Core/tinyusb/src/portable/st/stm32_fsdev/subdir.mk
+-include Core/tinyusb/src/portable/sony/cxd56/subdir.mk
+-include Core/tinyusb/src/portable/renesas/rusb2/subdir.mk
+-include Core/tinyusb/src/portable/raspberrypi/rp2040/subdir.mk
+-include Core/tinyusb/src/portable/raspberrypi/pio_usb/subdir.mk
+-include Core/tinyusb/src/portable/ohci/subdir.mk
+-include Core/tinyusb/src/portable/nxp/lpc_ip3516/subdir.mk
+-include Core/tinyusb/src/portable/nxp/lpc_ip3511/subdir.mk
+-include Core/tinyusb/src/portable/nxp/lpc17_40/subdir.mk
+-include Core/tinyusb/src/portable/nxp/khci/subdir.mk
+-include Core/tinyusb/src/portable/nuvoton/nuc505/subdir.mk
+-include Core/tinyusb/src/portable/nuvoton/nuc121/subdir.mk
+-include Core/tinyusb/src/portable/nuvoton/nuc120/subdir.mk
+-include Core/tinyusb/src/portable/nordic/nrf5x/subdir.mk
+-include Core/tinyusb/src/portable/mindmotion/mm32/subdir.mk
+-include Core/tinyusb/src/portable/microchip/samx7x/subdir.mk
+-include Core/tinyusb/src/portable/microchip/samg/subdir.mk
+-include Core/tinyusb/src/portable/microchip/samd/subdir.mk
+-include Core/tinyusb/src/portable/microchip/pic32mz/subdir.mk
+-include Core/tinyusb/src/portable/microchip/pic/subdir.mk
+-include Core/tinyusb/src/portable/mentor/musb/subdir.mk
+-include Core/tinyusb/src/portable/ehci/subdir.mk
+-include Core/tinyusb/src/portable/dialog/da146xx/subdir.mk
+-include Core/tinyusb/src/portable/chipidea/ci_hs/subdir.mk
+-include Core/tinyusb/src/portable/chipidea/ci_fs/subdir.mk
+-include Core/tinyusb/src/portable/bridgetek/ft9xx/subdir.mk
+-include Core/tinyusb/src/portable/analog/max3421/subdir.mk
+-include Core/tinyusb/src/host/subdir.mk
+-include Core/tinyusb/src/device/subdir.mk
+-include Core/tinyusb/src/common/subdir.mk
+-include Core/tinyusb/src/class/video/subdir.mk
+-include Core/tinyusb/src/class/vendor/subdir.mk
+-include Core/tinyusb/src/class/usbtmc/subdir.mk
+-include Core/tinyusb/src/class/printer/subdir.mk
+-include Core/tinyusb/src/class/net/subdir.mk
+-include Core/tinyusb/src/class/mtp/subdir.mk
+-include Core/tinyusb/src/class/msc/subdir.mk
+-include Core/tinyusb/src/class/midi/subdir.mk
+-include Core/tinyusb/src/class/hid/subdir.mk
+-include Core/tinyusb/src/class/dfu/subdir.mk
+-include Core/tinyusb/src/class/cdc/subdir.mk
+-include Core/tinyusb/src/class/bth/subdir.mk
+-include Core/tinyusb/src/class/audio/subdir.mk
+-include Core/tinyusb/src/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
 -include objects.mk
@@ -38,34 +86,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := nucleo411
+BUILD_ARTIFACT_NAME := stompr_board
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-nucleo411.elf \
+stompr_board.elf \
 
 MAP_FILES += \
-nucleo411.map \
+stompr_board.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-nucleo411.list \
+stompr_board.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: nucleo411.elf secondary-outputs
+main-build: stompr_board.elf secondary-outputs
 
 # Tool invocations
-nucleo411.elf nucleo411.map: $(OBJS) $(USER_OBJS) /Users/matthewallen/git/nucleo411/STM32F411RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "nucleo411.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/matthewallen/git/nucleo411/STM32F411RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="nucleo411.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+stompr_board.elf stompr_board.map: $(OBJS) $(USER_OBJS) /Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/STM32F411RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "stompr_board.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/matthewallen/STM32CubeIDE/workspace_2.0.0/stompr_board/STM32F411RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="stompr_board.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -74,14 +122,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-nucleo411.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "nucleo411.list"
+stompr_board.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "stompr_board.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) default.size.stdout nucleo411.elf nucleo411.list nucleo411.map
+	-$(RM) default.size.stdout stompr_board.elf stompr_board.list stompr_board.map
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
